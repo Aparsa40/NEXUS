@@ -276,7 +276,7 @@ async def broadcast_agent_update(message: discord.Message) -> None:
         content = message.content.strip()
         if not content and message.embeds:
             embed = message.embeds[0]
-            content = "\\n".join(
+            content = "\n".join(
                 part for part in [embed.title, embed.description] if part
             )
         if not content:
@@ -285,9 +285,9 @@ async def broadcast_agent_update(message: discord.Message) -> None:
         if len(content) > 1450:
             excerpt += "…"
         await channel.send(
-            f"📡 **گزارش ایجنت: {message.author.display_name}**\\n"
+            f"📡 **گزارش ایجنت: {message.author.display_name}**\n"
             f"کانال مبدأ: <#{message.channel.id}> | "
-            f"[مشاهده پیام اصلی]({message.jump_url})\\n"
+            f"[مشاهده پیام اصلی]({message.jump_url})\n"
             f"{excerpt}"
         )
     except (discord.HTTPException, discord.Forbidden, discord.NotFound):
