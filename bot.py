@@ -23,7 +23,7 @@ load_dotenv()
 DISCORD_TOKEN = os.getenv("DISCORD_TOKEN")
 GITHUB_TOKEN = os.getenv("GITHUB_TOKEN")
 OPENROUTER_API_KEY = os.getenv("OPENROUTER_API_KEY")
-GITHUB_REPO = os.getenv("GITHUB_REPO", "Aparsa40/NEXUS")
+GITHUB_REPO = os.getenv("GITHUB_REPO", "Aparsa40/rudin-store")
 AI_MODEL = os.getenv("AI_MODEL", "openrouter/free")
 
 ALLOWED_CHANNEL_IDS = parse_channel_ids(os.getenv("NEXUS_CHANNEL_IDS"))
