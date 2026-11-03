@@ -1,156 +1,220 @@
-# NEXUS — Discord-Based AI Project Coordination
+# NEXUS — AI Project Coordination Hub
 
-NEXUS is an early-stage Discord bot for AI-assisted software development coordination. The current Python implementation connects Discord, OpenRouter, and the GitHub REST API.
+NEXUS is a Discord-based coordination bot for teams of human developers and
+independent AI coding agents. It connects Discord, OpenRouter, GitHub, and a
+local SQLite activity store.
 
-> **Status:** Initial development. The repository does not yet implement a complete multi-agent orchestration platform, persistent shared memory, or a branch-and-pull-request editing workflow.
+The bot improves shared project awareness. Coding agents continue to work
+directly with their own development tools and GitHub access; NEXUS collects
+status, records team updates, identifies blockers, and publishes reports. It is
+not a code-writing or GitHub mutation agent.
 
 ## Current capabilities
 
-The implementation in `bot.py` currently supports:
+- Natural-language questions and requests in configured Discord channels,
+  without requiring the ! prefix.
+- Legacy ! commands remain available for compatibility.
+- Read-only GitHub visibility: recent commits, branches, open pull requests,
+  open issues, and recent GitHub Actions runs.
+- Read-only repository file retrieval on request.
+- Activity capture from human members and other AI bots in configured agent
+  channels. NEXUS records other bots but does not reply to them.
+- Persistent activity history in SQLite, with configurable retention.
+- On-demand and daily scheduled project reports, delivered to a configured
+  Discord channel.
+- Reports distinguish confirmed evidence, inferences, missing information,
+  blockers, and recommended handoffs.
 
-- Discord Gateway connectivity through `discord.py`.
-- AI responses through the OpenRouter Chat Completions API.
-- GitHub file reading and repository activity summaries.
-- AI-assisted file editing with a preview and explicit confirmation.
-- Direct bot mentions and prefix commands.
+## Architecture
 
-### Discord commands
+    Human developers / AI coding agents
+                    |
+                    v
+            Discord project channels
+                    |
+                    v
+              NEXUS coordinator
+              /       |        \
+             v        v         v
+        Message     GitHub    SQLite activity
+        routing     reader       history
+             \       |         /
+              \      v        /
+               Coordination analysis
+                        |
+                 OpenRouter model
+                        |
+            Replies and scheduled reports
 
-| Command | Purpose |
-| --- | --- |
-| `!help` | Show command overview. |
-| `!ping` | Check Gateway latency. |
-| `!ask <prompt>` | Ask the configured AI model. |
-| Mention the bot | Ask a question by mentioning the bot. |
-| `!خواندکد <path>` | Read a GitHub repository file. |
-| `!status` | Show recent repository activity. |
-| `!branches` | List branches. |
-| `!prs` | List open pull requests. |
-| `!commits` | List recent commits. |
-| `!تغییر <path> <instruction>` | Generate and preview a file update. |
-| `!تأییدتغییر` | Confirm and write the pending update. |
+NEXUS does not commit code, edit files, create issues, create pull requests, or
+merge changes. GitHub access is read-only in this implementation. The
+coordinator reports what it can verify and explicitly identifies unavailable
+data. A metadata report is not a substitute for a full source-code audit.
 
 ## Technology
 
 - Python 3.10+
-- `discord.py` for Discord
-- `aiohttp` for asynchronous HTTP
-- `python-dotenv` for environment configuration
-- OpenRouter for model inference
-- GitHub REST API for repository operations
-
-Dependencies are listed in `requirements.txt`.
+- discord.py
+- aiohttp
+- python-dotenv
+- OpenRouter Chat Completions API
+- GitHub REST API
+- SQLite (Python standard library)
 
 ## Requirements
 
 - Python 3.10 or newer.
 - A Discord application and bot token.
-- A GitHub Personal Access Token with the minimum repository permissions needed to read repository metadata and contents and update contents.
-- An OpenRouter API key and an available model slug.
+- A fine-grained GitHub token scoped to the target repository with read-only
+  permissions.
+- An OpenRouter API key and a model available to your account.
+- Discord Message Content Intent enabled in the Developer Portal and in
+  the bot code.
 
-Enable **Message Content Intent** in the Discord Developer Portal and in the bot configuration.
+Recommended fine-grained GitHub token permissions:
+
+| Permission | Access |
+| --- | --- |
+| Metadata | Read-only |
+| Contents | Read-only |
+| Pull requests | Read-only |
+| Issues | Read-only |
+| Actions | Read-only |
+
+No GitHub write permissions are required by the current coordinator.
 
 ## Setup
 
 Clone the repository:
 
-```bash
-git clone https://github.com/Aparsa40/NEXUS.git
-cd NEXUS
+    git clone https://github.com/Aparsa40/NEXUS.git
+    cd NEXUS
 
-```
-
-Create a virtual environment:
+Create and activate a virtual environment.
 
 Windows PowerShell:
 
-```powershell
-py -3.10 -m venv .venv
-.\.venv\Scripts\Activate.ps1
-
-```
+    py -3.10 -m venv .venv
+    .\.venv\Scripts\Activate.ps1
 
 macOS / Linux:
 
-```bash
-python3 -m venv .venv
-source .venv/bin/activate
-
-```
+    python3 -m venv .venv
+    source .venv/bin/activate
 
 Install dependencies:
 
-```bash
-python -m pip install --upgrade pip
-python -m pip install -r requirements.txt
+    python -m pip install --upgrade pip
+    python -m pip install -r requirements.txt
 
-```
-
-Copy `.env_example` to `.env` and replace every placeholder. Never commit `.env`.
+Copy .env_example to .env and fill in the credentials and Discord channel IDs.
+Never commit .env.
 
 PowerShell:
 
-```powershell
-Copy-Item .env_example .env
-
-```
+    Copy-Item .env_example .env
 
 macOS / Linux:
 
-```bash
-cp .env_example .env
+    cp .env_example .env
 
-```
-
-Required variables:
+## Configuration
 
 | Variable | Purpose |
 | --- | --- |
-| `DISCORD_TOKEN` | Discord bot token. |
-| `GITHUB_TOKEN` | GitHub Personal Access Token. |
-| `OPENROUTER_API_KEY` | OpenRouter API key. |
+| DISCORD_TOKEN | Discord bot token. |
+| GITHUB_TOKEN | Fine-grained, read-only GitHub token. |
+| OPENROUTER_API_KEY | OpenRouter API key. |
+| GITHUB_REPO | Target repository in owner/name format. |
+| AI_MODEL | OpenRouter model slug, e.g. openrouter/free if available. |
+| NEXUS_CHANNEL_IDS | Comma-separated channel IDs where humans may talk to NEXUS. |
+| NEXUS_AGENT_CHANNEL_IDS | Channels where messages from other agents are recorded. Defaults to NEXUS_CHANNEL_IDS. |
+| NEXUS_AGENT_BOT_IDS | Optional comma-separated bot IDs to observe. Empty means all other bots in agent channels. |
+| NEXUS_REPORT_CHANNEL_ID | Destination channel for scheduled reports. Empty disables scheduled reports. |
+| NEXUS_REPORT_TIME | Daily report time in 24-hour HH:MM format. Empty disables scheduling. |
+| NEXUS_REPORT_TIMEZONE | IANA timezone for the report schedule, e.g. America/New_York. |
+| NEXUS_DB_PATH | SQLite activity database path. |
+| NEXUS_ACTIVITY_RETENTION_DAYS | Number of days to retain recorded messages. |
+| LOG_LEVEL | Logging level; defaults to INFO. |
 
-Set these project variables explicitly:
+Copy channel IDs using Discord Developer Mode. Add only channels intended for
+project coordination. If NEXUS_CHANNEL_IDS is empty, natural-language
+requests and prefix commands are disabled. Keep agent channels limited to
+trusted bots; populate NEXUS_AGENT_BOT_IDS for strict filtering.
 
-| Variable | Purpose |
+The bot needs permission to view channels, read message history, send messages,
+and use the message content intent. It must be invited to the report channel.
+
+## Using NEXUS
+
+In an allowed channel, ask naturally, for example:
+
+- وضعیت فعلی ریپو را بررسی کن و گزارش بده.
+- آخرین Commitها و Branchهای فعال را نشان بده.
+- PRهای باز و وضعیت CI را بررسی کن.
+- فعالیت DeepSeek و Mistral را خلاصه کن و موانع را بگو.
+- برای جلسه بعدی، ریسک‌ها و کارهای باقی‌مانده را جمع‌بندی کن.
+
+Compatibility commands:
+
+| Command | Purpose |
 | --- | --- |
-| `GITHUB_REPO` | Target repository as `owner/name`. The current code fallback still points to the legacy `Aparsa40/Rudin-store`; set it to `Aparsa40/NEXUS`. |
-| `AI_MODEL` | OpenRouter model slug, for example `openrouter/free` if available to your account. |
+| !help | Show help. |
+| !ping | Check Discord Gateway latency. |
+| !ask prompt | Ask the configured model. |
+| !خواندکد path | Read a repository text file. |
+| !status / !report | Generate a project report. |
+| !branches | List branches. |
+| !prs | List open pull requests. |
+| !commits | List recent commits. |
 
-Start the bot:
+## Activity and report behavior
 
-```bash
-python bot.py
+- Human messages in NEXUS_CHANNEL_IDS are recorded and may be routed to the
+  model when they look like a question or request.
+- Other bot messages are recorded only in NEXUS_AGENT_CHANNEL_IDS; NEXUS does
+  not answer those messages, preventing bot-to-bot reply loops.
+- Activity is stored locally in SQLite. The database is excluded from Git.
+- Scheduled reports are checked every 30 seconds and published once per local
+  calendar day at the configured time. The last successful report date is
+  persisted to prevent duplicate daily reports.
+- If GitHub Actions data or another endpoint is inaccessible, the report must
+  disclose that gap rather than treating it as a passing result.
 
-```
+## Privacy and operational limits
 
-## Important operational notes
-
-- Confirmed `!تأییدتغییر` edits are currently written directly to `main`. The bot does **not** create a feature branch or pull request. Review every proposed update before confirming it.
-- GitHub branch protection must be configured separately in repository settings; documentation does not enforce it.
-- Pending edit proposals are held in process memory and are lost on restart.
-- Treat AI-generated output as untrusted until reviewed.
+- Discord message content in configured agent channels is stored locally for
+  the configured retention period. Do not include secrets or personal data in
+  agent status messages.
+- The optional bot ID allowlist should be used when agent channels may contain
+  untrusted bots.
+- OpenRouter receives the prompt context needed to answer, including selected
+  recent activity and GitHub metadata. Review the provider's data policies
+  before using private project information.
+- The bot does not currently provide cross-server identity verification,
+  cryptographic agent attestations, or a full audit trail of agent tool calls.
+- Natural-language routing uses lightweight intent detection; it is not yet a
+  fully general tool-calling agent.
 
 ## Quality checks
 
-GitHub Actions runs Python compilation, Ruff linting, dependency consistency, and Markdown linting. A TypeScript compiler check runs only if TypeScript source files and `tsconfig.json` are added. This repository is currently Python-only, so TypeScript checking is skipped.
+Run locally:
 
-Local checks:
+    python -m compileall -q bot.py nexus_core.py tests
+    python -m unittest discover -s tests -v
+    python -m pip install ruff
+    ruff check .
+    npx --yes markdownlint-cli2 "**/*.md"
 
-```bash
-python -m compileall -q bot.py
-python -m pip install ruff
-ruff check .
-npx --yes markdownlint-cli2 "**/*.md"
-
-```
-
-There is not yet an automated application test suite. Add focused unit and integration tests as the bot is separated into testable components.
+GitHub Actions runs compilation, unit tests, Ruff, dependency checks, and
+Markdown linting on pull requests. A TypeScript check runs only if TypeScript
+source files and tsconfig.json are added; this repository is currently
+Python-only.
 
 ## Contributing and security
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) and [SECURITY.md](SECURITY.md) before contributing.
+Read CONTRIBUTING.md and SECURITY.md.
 
 ## License
 
-MIT. See [LICENSE](LICENSE).
+MIT. See LICENSE.
