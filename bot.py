@@ -29,6 +29,12 @@ AI_MODEL = os.getenv("AI_MODEL", "openrouter/free")
 ALLOWED_CHANNEL_IDS = parse_channel_ids(os.getenv("NEXUS_CHANNEL_IDS"))
 AGENT_CHANNEL_IDS = parse_channel_ids(os.getenv("NEXUS_AGENT_CHANNEL_IDS")) or ALLOWED_CHANNEL_IDS
 AGENT_BOT_IDS = parse_user_ids(os.getenv("NEXUS_AGENT_BOT_IDS"))
+_sync_ids = parse_channel_ids(os.getenv("NEXUS_SYNC_CHANNEL_ID"))
+if len(_sync_ids) > 1:
+    raise RuntimeError("NEXUS_SYNC_CHANNEL_ID accepts one Discord channel ID.")
+SYNC_CHANNEL_ID = next(iter(_sync_ids), None)
+if SYNC_CHANNEL_ID:
+    AGENT_CHANNEL_IDS.add(SYNC_CHANNEL_ID)
 REPORT_CHANNEL_ID = os.getenv("NEXUS_REPORT_CHANNEL_ID", "").strip()
 REPORT_TIME = os.getenv("NEXUS_REPORT_TIME", "").strip()
 REPORT_TIMEZONE = os.getenv("NEXUS_REPORT_TIMEZONE", "UTC").strip()
@@ -259,6 +265,35 @@ async def send_long(destination: Any, text: str) -> None:
         await destination.send(text[offset:offset + MAX_MESSAGE])
 
 
+async def broadcast_agent_update(message: discord.Message) -> None:
+    """Relay agent messages into the shared coordination channel, without replying."""
+    if not SYNC_CHANNEL_ID or message.channel.id == SYNC_CHANNEL_ID:
+        return
+    try:
+        channel = bot.get_channel(SYNC_CHANNEL_ID)
+        if channel is None:
+            channel = await bot.fetch_channel(SYNC_CHANNEL_ID)
+        content = message.content.strip()
+        if not content and message.embeds:
+            embed = message.embeds[0]
+            content = "\\n".join(
+                part for part in [embed.title, embed.description] if part
+            )
+        if not content:
+            return
+        excerpt = content[:1450]
+        if len(content) > 1450:
+            excerpt += "…"
+        await channel.send(
+            f"📡 **گزارش ایجنت: {message.author.display_name}**\\n"
+            f"کانال مبدأ: <#{message.channel.id}> | "
+            f"[مشاهده پیام اصلی]({message.jump_url})\\n"
+            f"{excerpt}"
+        )
+    except (discord.HTTPException, discord.Forbidden, discord.NotFound):
+        logger.exception("Could not relay agent update to the sync channel.")
+
+
 async def configured_report_channel(fallback: Any) -> Any:
     if not REPORT_CHANNEL_ID:
         return fallback
@@ -379,6 +414,7 @@ async def on_message(message: discord.Message) -> None:
                 content=message.content,
                 created_at=message.created_at,
             )
+            await broadcast_agent_update(message)
         return
 
     if message.channel.id not in ALLOWED_CHANNEL_IDS | AGENT_CHANNEL_IDS:
