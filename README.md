@@ -57,38 +57,49 @@ Clone the repository:
 ```bash
 git clone https://github.com/Aparsa40/NEXUS.git
 cd NEXUS
+
 ```
 
 Create a virtual environment:
 
 Windows PowerShell:
+
 ```powershell
 py -3.10 -m venv .venv
 .\.venv\Scripts\Activate.ps1
+
 ```
 
 macOS / Linux:
+
 ```bash
 python3 -m venv .venv
 source .venv/bin/activate
+
 ```
 
 Install dependencies:
+
 ```bash
 python -m pip install --upgrade pip
 python -m pip install -r requirements.txt
+
 ```
 
 Copy `.env_example` to `.env` and replace every placeholder. Never commit `.env`.
 
 PowerShell:
+
 ```powershell
 Copy-Item .env_example .env
+
 ```
 
 macOS / Linux:
+
 ```bash
 cp .env_example .env
+
 ```
 
 Required variables:
@@ -107,8 +118,10 @@ Set these project variables explicitly:
 | `AI_MODEL` | OpenRouter model slug, for example `openrouter/free` if available to your account. |
 
 Start the bot:
+
 ```bash
 python bot.py
+
 ```
 
 ## Important operational notes
@@ -123,11 +136,13 @@ python bot.py
 GitHub Actions runs Python compilation, Ruff linting, dependency consistency, and Markdown linting. A TypeScript compiler check runs only if TypeScript source files and `tsconfig.json` are added. This repository is currently Python-only, so TypeScript checking is skipped.
 
 Local checks:
+
 ```bash
 python -m compileall -q bot.py
 python -m pip install ruff
 ruff check .
 npx --yes markdownlint-cli2 "**/*.md"
+
 ```
 
 There is not yet an automated application test suite. Add focused unit and integration tests as the bot is separated into testable components.
