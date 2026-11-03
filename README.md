@@ -7,6 +7,7 @@ NEXUS is an early-stage Discord bot for AI-assisted software development coordin
 ## Current capabilities
 
 The implementation in `bot.py` currently supports:
+
 - Discord Gateway connectivity through `discord.py`.
 - AI responses through the OpenRouter Chat Completions API.
 - GitHub file reading and repository activity summaries.
