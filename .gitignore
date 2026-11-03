@@ -11,6 +11,13 @@ __pycache__/
 .ruff_cache/
 .mypy_cache/
 
+# Local database and runtime data
+data/
+*.sqlite
+*.sqlite3
+*.sqlite-wal
+*.sqlite-shm
+
 # Logs and build artifacts
 *.log
 build/

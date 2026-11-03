@@ -1,25 +1,42 @@
 # Changelog
 
-Notable user-visible changes will be documented here. No formal application release has been declared; changes remain under **Unreleased** until a version is tagged.
+Notable user-visible changes are documented here. No formal application
+release has been declared; changes remain under Unreleased until a version
+is tagged.
 
 ## [Unreleased]
 
 ### Added
 
-- Project documentation for setup, current capabilities, configuration, and limitations.
-- Contribution guidelines for humans and AI-assisted contributors.
-- Security guidance for credentials, vulnerability reporting, and repository governance.
-- MIT license and Semantic Versioning policy.
-- GitHub Actions quality workflow for Python and Markdown.
-- Conditional TypeScript compilation check for a future TypeScript codebase.
+- Discord natural-language request handling and model-assisted intent routing
+  in configured project channels.
+- Read-only GitHub snapshot collection for commits, branches, PRs, issues, and
+  recent Actions runs.
+- SQLite-backed activity history for human and AI-agent messages.
+- Optional relay of agent updates into a shared Discord synchronization channel.
+- Scheduled daily project reports with configurable channel, local time, and
+  timezone.
+- Unit tests for message routing, ID parsing, and activity persistence.
+- CI execution of Python unit tests.
 
 ### Changed
 
-- Replaced legacy README conversation notes with project documentation.
-- Replaced example environment values with placeholders and the NEXUS repository target.
-- Expanded `.gitignore` for Python caches, local environments, and tooling artifacts.
+- Reframed NEXUS as a coordination and observability bot, not a coding executor.
+- Removed direct GitHub file-writing and confirmation flows from the bot.
+- Restricted human interaction and prefix commands to configured Discord
+  channels.
+- Updated setup and security documentation for read-only GitHub access.
 
-### Notes
+### Security
 
-- This documentation and CI update is not an application feature release.
-- The bot still writes confirmed GitHub edits directly to `main`; branch-based editing remains future work.
+- GitHub integration uses read-only requests in the coordinator implementation.
+- Local SQLite activity data is excluded from version control.
+- Agent messages are treated as untrusted context, not executable instructions.
+
+### Limitations
+
+- Natural-language routing uses lightweight intent detection and is not yet a
+  fully general tool-calling system.
+- Agent identity is based on Discord identity and is not cryptographically
+  attested.
+- Scheduled reports require explicit channel, time, and timezone configuration.
