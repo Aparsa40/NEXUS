@@ -1,21 +1,25 @@
-# Python virtual environment
-
-.venv/
-
-## Environment variables and secrets
-
+# Environment variables and secrets
 .env
+.env.*
 
-## Python cache
-            /
+# Python environments and caches
+.venv/
+venv/
 __pycache__/
 *.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
 
-## Logs
-
+# Logs and build artifacts
 *.log
+build/
+dist/
+*.egg-info/
 
-## IDE
+# Node tooling
+node_modules/
 
+# IDE and workspace files
 .vscode/
-Discord-Bot-Wifream.code-workspace
+*.code-workspace
