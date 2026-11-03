@@ -18,7 +18,8 @@ not a code-writing or GitHub mutation agent.
   open issues, and recent GitHub Actions runs.
 - Read-only repository file retrieval on request.
 - Activity capture from human members and other AI bots in configured agent
-  channels. NEXUS records other bots but does not reply to them.
+  channels. NEXUS can relay agent messages into a shared sync channel and never
+  replies to other bots.
 - Persistent activity history in SQLite, with configurable retention.
 - On-demand and daily scheduled project reports, delivered to a configured
   Discord channel.
@@ -129,6 +130,7 @@ macOS / Linux:
 | AI_MODEL | OpenRouter model slug, e.g. openrouter/free if available. |
 | NEXUS_CHANNEL_IDS | Comma-separated channel IDs where humans may talk to NEXUS. |
 | NEXUS_AGENT_CHANNEL_IDS | Channels where messages from other agents are recorded. Defaults to NEXUS_CHANNEL_IDS. |
+| NEXUS_SYNC_CHANNEL_ID | Shared channel where NEXUS relays updates from other AI bots. Empty disables forwarding. |
 | NEXUS_AGENT_BOT_IDS | Optional comma-separated bot IDs to observe. Empty means all other bots in agent channels. |
 | NEXUS_REPORT_CHANNEL_ID | Destination channel for scheduled reports. Empty disables scheduled reports. |
 | NEXUS_REPORT_TIME | Daily report time in 24-hour HH:MM format. Empty disables scheduling. |
@@ -172,8 +174,9 @@ Compatibility commands:
 
 - Human messages in NEXUS_CHANNEL_IDS and NEXUS_AGENT_CHANNEL_IDS are recorded.
   Only NEXUS_CHANNEL_IDS receive natural-language replies and prefix commands.
-- Other bot messages are recorded only in NEXUS_AGENT_CHANNEL_IDS; NEXUS does
-  not answer those messages, preventing bot-to-bot reply loops.
+- Other bot messages are recorded only in NEXUS_AGENT_CHANNEL_IDS. When a sync
+  channel is configured, messages are relayed there with author and source
+  attribution. NEXUS never replies to another bot.
 - Activity is stored locally in SQLite. The database is excluded from Git.
 - Scheduled reports are checked every 30 seconds and published once per local
   calendar day at the configured time. The last successful report date is
