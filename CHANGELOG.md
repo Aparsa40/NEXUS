@@ -8,7 +8,8 @@ is tagged.
 
 ### Added
 
-- Discord natural-language request handling in configured project channels.
+- Discord natural-language request handling and model-assisted intent routing
+  in configured project channels.
 - Read-only GitHub snapshot collection for commits, branches, PRs, issues, and
   recent Actions runs.
 - SQLite-backed activity history for human and AI-agent messages.
