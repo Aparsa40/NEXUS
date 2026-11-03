@@ -21,8 +21,9 @@ not a code-writing or GitHub mutation agent.
   channels. NEXUS can relay agent messages into a shared sync channel and never
   replies to other bots.
 - Persistent activity history in SQLite, with configurable retention.
-- On-demand and daily scheduled project reports, delivered to a configured
-  Discord channel.
+- On-demand and four-times-daily project reports, delivered to a configured
+  Discord channel. The newest report is pinned; the previous NEXUS report pin
+  is replaced to keep the channel's pin list tidy.
 - Reports distinguish confirmed evidence, inferences, missing information,
   blockers, and recommended handoffs.
 
@@ -133,8 +134,8 @@ macOS / Linux:
 | NEXUS_SYNC_CHANNEL_ID | Shared channel where NEXUS relays updates from other AI bots. Empty disables forwarding. |
 | NEXUS_AGENT_BOT_IDS | Optional comma-separated bot IDs to observe. Empty means all other bots in agent channels. |
 | NEXUS_REPORT_CHANNEL_ID | Destination channel for scheduled reports. Empty disables scheduled reports. |
-| NEXUS_REPORT_TIME | Daily report time in 24-hour HH:MM format. Empty disables scheduling. |
-| NEXUS_REPORT_TIMEZONE | IANA timezone for the report schedule, e.g. America/New_York. |
+| NEXUS_REPORT_TIMES | Comma-separated report times in 24-hour HH:MM format, e.g. 00:00,06:00,12:00,18:00. Empty disables scheduling. |
+| NEXUS_REPORT_TIMEZONE | IANA timezone for the report schedule, e.g. Asia/Tehran. |
 | NEXUS_DB_PATH | SQLite activity database path. |
 | NEXUS_ACTIVITY_RETENTION_DAYS | Number of days to retain recorded messages. |
 | LOG_LEVEL | Logging level; defaults to INFO. |
@@ -178,9 +179,12 @@ Compatibility commands:
   channel is configured, messages are relayed there with author and source
   attribution. NEXUS never replies to another bot.
 - Activity is stored locally in SQLite. The database is excluded from Git.
-- Scheduled reports are checked every 30 seconds and published once per local
-  calendar day at the configured time. The last successful report date is
-  persisted to prevent duplicate daily reports.
+- Scheduled reports are checked every 30 seconds and published at each configured
+  local time. A date-and-time slot is persisted after delivery to prevent duplicate
+  reports while allowing four distinct reports each day.
+- The newest report is pinned in the report channel. NEXUS unpins its previous
+  report before pinning the new one; grant the bot permission to manage messages
+  (or pin messages, where available) in that channel.
 - If GitHub Actions data or another endpoint is inaccessible, the report must
   disclose that gap rather than treating it as a passing result.
 
