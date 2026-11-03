@@ -191,7 +191,8 @@ def format_activity(events: list[dict[str, Any]], limit: int = 40) -> str:
             continue
         lines.append(
             f"- [{event.get('created_at', '')}] "
-            f"{role} {event.get('author_name', 'unknown')}: {content[:500]}"
+            f"{role} {event.get('author_name', 'unknown')} "
+            f"(channel {event.get('channel_id', 'unknown')}): {content[:500]}"
         )
     return "\n".join(lines) or "پیام متنی قابل استفاده‌ای ثبت نشده است."
 
