@@ -1,0 +1,21 @@
+# Python virtual environment
+
+.venv/
+
+## Environment variables and secrets
+
+.env
+
+## Python cache
+            /
+__pycache__/
+*.py[cod]
+
+## Logs
+
+*.log
+
+## IDE
+
+.vscode/
+Discord-Bot-Wifream.code-workspace
