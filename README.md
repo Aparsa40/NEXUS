@@ -170,8 +170,8 @@ Compatibility commands:
 
 ## Activity and report behavior
 
-- Human messages in NEXUS_CHANNEL_IDS are recorded and may be routed to the
-  model when they look like a question or request.
+- Human messages in NEXUS_CHANNEL_IDS and NEXUS_AGENT_CHANNEL_IDS are recorded.
+  Only NEXUS_CHANNEL_IDS receive natural-language replies and prefix commands.
 - Other bot messages are recorded only in NEXUS_AGENT_CHANNEL_IDS; NEXUS does
   not answer those messages, preventing bot-to-bot reply loops.
 - Activity is stored locally in SQLite. The database is excluded from Git.
