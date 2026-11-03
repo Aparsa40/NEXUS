@@ -6,7 +6,6 @@ from pathlib import Path
 from nexus_core import (
     ActivityStore,
     classify_message,
-    format_activity,
     parse_channel_ids,
 )
 
