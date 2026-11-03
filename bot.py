@@ -229,7 +229,7 @@ async def classify_with_model(text: str) -> str:
         system_prompt=ROUTER_SYSTEM_PROMPT,
         max_tokens=24,
     )
-    match = re.search(r"\\b(report|github|coordination|chat|ignore)\\b", result.lower())
+    match = re.search(r"\b(report|github|coordination|chat|ignore)\b", result.lower())
     return match.group(1) if match else "ignore"
 
 
