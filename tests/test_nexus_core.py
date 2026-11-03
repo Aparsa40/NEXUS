@@ -28,6 +28,7 @@ class MessageClassificationTests(unittest.TestCase):
 
     def test_recognizes_agent_coordination(self):
         self.assertEqual(classify_message("گزارش فعالیت ایجنت‌ها را بده"), "coordination")
+        self.assertEqual(classify_message("DeepSeek چه کاری انجام داده؟"), "coordination")
 
     def test_recognizes_questions_and_ignores_chatter(self):
         self.assertEqual(classify_message("سلام، خوبی؟"), "chat")
