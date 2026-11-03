@@ -233,6 +233,24 @@ async def send_long(destination: Any, text: str) -> None:
         await destination.send(text[offset:offset + MAX_MESSAGE])
 
 
+async def configured_report_channel(fallback: Any) -> Any:
+    if not REPORT_CHANNEL_ID:
+        return fallback
+    try:
+        channel = bot.get_channel(int(REPORT_CHANNEL_ID))
+        return channel or await bot.fetch_channel(int(REPORT_CHANNEL_ID))
+    except (ValueError, discord.HTTPException):
+        logger.exception("Configured report channel is unavailable.")
+        return fallback
+
+
+async def publish_report(fallback: Any) -> None:
+    destination = await configured_report_channel(fallback)
+    await send_long(destination, await generate_report())
+    if getattr(destination, "id", None) != getattr(fallback, "id", None):
+        await fallback.send(f"گزارش پروژه در کانال <#{destination.id}> منتشر شد.")
+
+
 async def process_natural_message(message: discord.Message) -> None:
     text = message.content
     intent = classify_message(text)
@@ -243,10 +261,13 @@ async def process_natural_message(message: discord.Message) -> None:
     if intent == "ignore":
         return
 
+    if intent == "report":
+        async with message.channel.typing():
+            await publish_report(message.channel)
+        return
+
     async with message.channel.typing():
-        if intent == "report":
-            answer = await generate_report()
-        elif intent == "github":
+        if intent == "github":
             path_match = re.search(
                 r"(?<![A-Za-z0-9_])([A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\."
                 r"(?:py|md|json|ya?ml|toml|txt|tsx?|jsx?|css|html|sql))",
@@ -393,12 +414,12 @@ async def ask_command(ctx: commands.Context, *, prompt: str) -> None:
 
 @bot.command(name="status")
 async def status_command(ctx: commands.Context) -> None:
-    await send_long(ctx, await generate_report())
+    await publish_report(ctx)
 
 
 @bot.command(name="report")
 async def report_command(ctx: commands.Context) -> None:
-    await send_long(ctx, await generate_report())
+    await publish_report(ctx)
 
 
 @bot.command(name="branches")
