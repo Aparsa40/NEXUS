@@ -193,8 +193,8 @@ Compatibility commands:
   before using private project information.
 - The bot does not currently provide cross-server identity verification,
   cryptographic agent attestations, or a full audit trail of agent tool calls.
-- Natural-language routing uses lightweight intent detection; it is not yet a
-  fully general tool-calling agent.
+- Natural-language routing combines keyword heuristics with a lightweight
+  model-based intent router; it is not yet a fully general tool-calling agent.
 
 ## Quality checks
 
