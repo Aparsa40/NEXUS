@@ -329,11 +329,9 @@ async def on_message(message: discord.Message) -> None:
             )
         return
 
-    if message.channel.id not in ALLOWED_CHANNEL_IDS:
+    if message.channel.id not in ALLOWED_CHANNEL_IDS | AGENT_CHANNEL_IDS:
         return
-    await bot.process_commands(message)
-    if message.content.startswith("!"):
-        return
+
     if message.content.strip():
         store.record(
             message_id=message.id,
@@ -344,6 +342,16 @@ async def on_message(message: discord.Message) -> None:
             content=message.content,
             created_at=message.created_at,
         )
+
+    # Agent-only channels are observed for context, but NEXUS only answers in
+    # the explicitly approved human interaction channels.
+    if message.channel.id not in ALLOWED_CHANNEL_IDS:
+        return
+
+    await bot.process_commands(message)
+    if message.content.startswith("!"):
+        return
+    if message.content.strip():
         await process_natural_message(message)
 
 
