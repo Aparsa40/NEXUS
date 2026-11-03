@@ -6,6 +6,7 @@ from pathlib import Path
 from nexus_core import (
     ActivityStore,
     classify_message,
+    format_activity,
     parse_channel_ids,
 )
 
@@ -56,6 +57,9 @@ class ActivityStoreTests(unittest.TestCase):
             self.assertEqual(len(events), 1)
             self.assertEqual(events[0]["author_name"], "DeepSeek")
             self.assertEqual(events[0]["is_bot"], 1)
+            summary = format_activity(events)
+            self.assertIn("channel 200", summary)
+            self.assertIn("DeepSeek", summary)
 
     def test_persists_scheduler_settings(self):
         with tempfile.TemporaryDirectory() as directory:
