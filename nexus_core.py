@@ -18,7 +18,8 @@ REPORT_TERMS = (
 GITHUB_TERMS = (
     "گیت هاب", "github", "commit", "کامیت", "branch", "شاخه",
     "pull request", "پول ریکوئست", "pr ", "issue", "ایشیو",
-    "ریپو", "repository", "فایل پروژه", "آخرین تغییرات",
+    "ریپو", "repository", "فایل", "کد", "readme", ".py", ".tsx", ".ts",
+    ".json", ".yaml", ".yml", "workflow", "pipeline", "وضعیت ci", "آخرین تغییرات",
 )
 COORDINATION_TERMS = (
     "ایجنت", "agent", "هماهنگی", "فعالیت اعضا", "چه کسی",
