@@ -13,6 +13,7 @@ is tagged.
 - Read-only GitHub snapshot collection for commits, branches, PRs, issues, and
   recent Actions runs.
 - SQLite-backed activity history for human and AI-agent messages.
+- Optional relay of agent updates into a shared Discord synchronization channel.
 - Scheduled daily project reports with configurable channel, local time, and
   timezone.
 - Unit tests for message routing, ID parsing, and activity persistence.
