@@ -247,12 +247,28 @@ async def process_natural_message(message: discord.Message) -> None:
         if intent == "report":
             answer = await generate_report()
         elif intent == "github":
+            path_match = re.search(
+                r"(?<![A-Za-z0-9_])([A-Za-z0-9_.-]+(?:/[A-Za-z0-9_.-]+)*\."
+                r"(?:py|md|json|ya?ml|toml|txt|tsx?|jsx?|css|html|sql))",
+                text,
+                flags=re.IGNORECASE,
+            )
+            file_context = ""
+            if path_match:
+                file_content, file_error = await read_github_file(path_match.group(1))
+                if file_error:
+                    file_context = f"\nFILE READ ERROR: {file_error}"
+                else:
+                    file_context = (
+                        f"\nREQUESTED FILE: {path_match.group(1)}\n"
+                        f"FILE CONTENT:\n{(file_content or '')[:12000]}"
+                    )
             snapshot = await project_snapshot()
             answer = await ask_ai(
-                "Answer this request from the live GitHub snapshot. State when "
-                "the snapshot lacks the requested detail; do not infer file content.\n"
+                "Answer this request from the live GitHub snapshot and any "
+                "retrieved file content. State when details are missing.\n"
                 "REQUEST:\n" + text + "\n\nSNAPSHOT:\n"
-                + format_github_snapshot(snapshot)
+                + format_github_snapshot(snapshot) + file_context
             )
         elif intent == "coordination":
             answer = await ask_ai(
