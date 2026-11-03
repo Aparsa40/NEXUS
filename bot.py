@@ -36,7 +36,12 @@ SYNC_CHANNEL_ID = next(iter(_sync_ids), None)
 if SYNC_CHANNEL_ID:
     AGENT_CHANNEL_IDS.add(SYNC_CHANNEL_ID)
 REPORT_CHANNEL_ID = os.getenv("NEXUS_REPORT_CHANNEL_ID", "").strip()
-REPORT_TIME = os.getenv("NEXUS_REPORT_TIME", "").strip()
+_report_times_value = os.getenv(
+    "NEXUS_REPORT_TIMES", os.getenv("NEXUS_REPORT_TIME", "")
+)
+REPORT_TIMES = tuple(sorted({
+    item.strip() for item in _report_times_value.split(",") if item.strip()
+}))
 REPORT_TIMEZONE = os.getenv("NEXUS_REPORT_TIMEZONE", "UTC").strip()
 DATABASE_PATH = os.getenv("NEXUS_DB_PATH", "data/nexus-activity.sqlite3")
 RETENTION_DAYS = int(os.getenv("NEXUS_ACTIVITY_RETENTION_DAYS", "30"))
@@ -62,8 +67,15 @@ if missing:
     raise RuntimeError("Missing environment variables: " + ", ".join(missing))
 if "/" not in GITHUB_REPO:
     raise RuntimeError("GITHUB_REPO must use owner/name format.")
-if REPORT_TIME and not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", REPORT_TIME):
-    raise RuntimeError("NEXUS_REPORT_TIME must use HH:MM format.")
+invalid_report_times = [
+    item for item in REPORT_TIMES
+    if not re.fullmatch(r"(?:[01]\d|2[0-3]):[0-5]\d", item)
+]
+if invalid_report_times:
+    raise RuntimeError(
+        "NEXUS_REPORT_TIMES must be comma-separated HH:MM values: "
+        + ", ".join(invalid_report_times)
+    )
 try:
     REPORT_TZ = ZoneInfo(REPORT_TIMEZONE)
 except ZoneInfoNotFoundError:
@@ -258,11 +270,33 @@ async def generate_report() -> str:
     return await ask_ai(report_prompt(await project_snapshot()))
 
 
-async def send_long(destination: Any, text: str) -> None:
+async def send_long(destination: Any, text: str) -> list[Any]:
     if not text:
         text = "پاسخی برای ارسال وجود ندارد."
+    sent = []
     for offset in range(0, len(text), MAX_MESSAGE):
-        await destination.send(text[offset:offset + MAX_MESSAGE])
+        sent.append(await destination.send(text[offset:offset + MAX_MESSAGE]))
+    return sent
+
+
+async def pin_latest_report(channel: Any, report_messages: list[Any]) -> None:
+    """Keep only the newest NEXUS report pinned to avoid filling the pin list."""
+    if not report_messages:
+        return
+    try:
+        if bot.user:
+            for pinned in await channel.pins():
+                if (
+                    pinned.author.id == bot.user.id
+                    and pinned.content.startswith("📊 گزارش وضعیت NEXUS")
+                ):
+                    await pinned.unpin(reason="Replacing with the latest NEXUS report")
+        await report_messages[0].pin(reason="Latest NEXUS project status report")
+    except (discord.Forbidden, discord.HTTPException):
+        logger.exception(
+            "Report was delivered, but Discord did not allow pinning it. "
+            "Check Manage Messages permission."
+        )
 
 
 async def broadcast_agent_update(message: discord.Message) -> None:
@@ -307,7 +341,9 @@ async def configured_report_channel(fallback: Any) -> Any:
 
 async def publish_report(fallback: Any) -> None:
     destination = await configured_report_channel(fallback)
-    await send_long(destination, await generate_report())
+    report = "📊 گزارش وضعیت NEXUS\n\n" + await generate_report()
+    sent = await send_long(destination, report)
+    await pin_latest_report(destination, sent)
     if getattr(destination, "id", None) != getattr(fallback, "id", None):
         await fallback.send(f"گزارش پروژه در کانال <#{destination.id}> منتشر شد.")
 
@@ -546,21 +582,24 @@ async def read_code(ctx: commands.Context, *, filepath: str) -> None:
 
 @tasks.loop(seconds=30)
 async def scheduled_reports() -> None:
-    if not REPORT_CHANNEL_ID or not REPORT_TIME:
+    if not REPORT_CHANNEL_ID or not REPORT_TIMES:
         return
     now = datetime.now(REPORT_TZ)
-    if now.strftime("%H:%M") != REPORT_TIME:
+    current_time = now.strftime("%H:%M")
+    if current_time not in REPORT_TIMES:
         return
-    today = now.date().isoformat()
-    if store.get_setting("last_scheduled_report_date") == today:
+    slot_key = f"{now.date().isoformat()}@{current_time}"
+    if store.get_setting("last_scheduled_report_slot") == slot_key:
         return
     try:
         channel = bot.get_channel(int(REPORT_CHANNEL_ID))
         if channel is None:
             channel = await bot.fetch_channel(int(REPORT_CHANNEL_ID))
-        await send_long(channel, await generate_report())
-        store.set_setting("last_scheduled_report_date", today)
-        logger.info("Scheduled report published for %s", today)
+        report = "📊 گزارش وضعیت NEXUS\n\n" + await generate_report()
+        sent = await send_long(channel, report)
+        await pin_latest_report(channel, sent)
+        store.set_setting("last_scheduled_report_slot", slot_key)
+        logger.info("Scheduled report published for %s", slot_key)
     except (ValueError, discord.HTTPException, discord.Forbidden, discord.NotFound):
         logger.exception("Scheduled report could not be delivered.")
 
